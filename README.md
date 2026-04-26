@@ -14,7 +14,8 @@
 </p>
 
 **Upstream source**: <https://github.com/teng-lin/notebooklm-py>
-**This fork**: <https://github.com/win4r/notebooklm-py>
+**Base Hermes fork**: <https://github.com/win4r/notebooklm-py>
+**This Codex fork**: <https://github.com/xxx-holic/notebooklm-py>
 
 > **⚠️ Unofficial Library - Use at Your Own Risk**
 >
@@ -26,16 +27,17 @@
 >
 > Best for prototypes, research, and personal projects. See [Troubleshooting](docs/troubleshooting.md) for debugging tips.
 
-> **This is [`win4r`'s fork](https://github.com/win4r/notebooklm-py)** — adds Hermes Agent compatibility and security hardening on top of [upstream](https://github.com/teng-lin/notebooklm-py).
+> **This Codex fork builds on [`win4r`'s Hermes fork](https://github.com/win4r/notebooklm-py)** - keeping the audited Hermes/security work while adding Codex-first installation, packaged guidance, and skill target support on top of [upstream](https://github.com/teng-lin/notebooklm-py).
 >
 > - **Python source tracks upstream `main`** (post-v0.3.4 bug fixes included), plus two cherry-picked PRs — **#298** (auto-refresh cookies on expiry) and **#279** (`sys.executable` for Playwright subprocess). We do not republish to PyPI.
 > - **Hermes-ready layout.** [`skills/notebooklm/SKILL.md`](skills/notebooklm/SKILL.md) satisfies Hermes's 3-part identifier requirement (`owner/repo/path`) that the upstream root-level SKILL.md doesn't.
-> - **Audit pinned.** Install commands below resolve tag `v0.3.4-hermes.4` (see [`SECURITY_AUDIT.md`](skills/notebooklm/SECURITY_AUDIT.md)), not `latest`.
+> - **Codex-ready layout.** [`CODEX.md`](CODEX.md) is packaged for `notebooklm agent show codex`, and `notebooklm skill install --target codex` writes to `~/.codex/skills/notebooklm/SKILL.md`.
+> - **Audit pinned base.** The Python/RPC source still matches `v0.3.4-hermes.4` plus Codex integration changes; keep using pinned refs for production rollouts and review fork-local diffs before upgrades.
 > - **For vanilla non-Hermes use**, prefer [upstream](https://github.com/teng-lin/notebooklm-py) directly — it gets updates first.
 
 ## What You Can Build
 
-🤖 **AI Agent Tools** - Integrate NotebookLM into Claude Code, Codex, Hermes Agent, OpenClaw, and other LLM agents. Ships with a root [NotebookLM skill](SKILL.md) for `npx skills add` / `notebooklm skill install` (Claude Code, `.agents/`, OpenClaw), a [`skills/notebooklm/`](skills/notebooklm/SKILL.md) subdirectory layout for `hermes skills install`, and repo-level Codex guidance in [`AGENTS.md`](AGENTS.md).
+🤖 **AI Agent Tools** - Integrate NotebookLM into Claude Code, Codex, Hermes Agent, OpenClaw, and other LLM agents. Ships with a root [NotebookLM skill](SKILL.md) for `npx skills add` / `notebooklm skill install` (Claude Code, Codex, `.agents/`, OpenClaw), a [`skills/notebooklm/`](skills/notebooklm/SKILL.md) subdirectory layout for `hermes skills install`, and Codex operator guidance in [`CODEX.md`](CODEX.md).
 
 📚 **Research Automation** - Bulk-import sources (URLs, PDFs, YouTube, Google Drive), run web/Drive research queries with auto-import, and extract insights programmatically. Build repeatable research pipelines.
 
@@ -94,16 +96,18 @@ These features are available via API/CLI but not exposed in NotebookLM's web int
 
 ## Installation
 
-This fork is **audit-pinned to tag `v0.3.4-hermes.4`** — upstream `main` Python source (past v0.3.4 with ~20 upstream bug fixes and features reviewed by upstream) plus cherry-picked [PR #298](https://github.com/teng-lin/notebooklm-py/pull/298) (auto-refresh cookies) and [PR #279](https://github.com/teng-lin/notebooklm-py/pull/279) (Playwright subprocess fix), plus this fork's Hermes layout and audit report. Install from the fork tag to get a reproducible snapshot that matches [`SECURITY_AUDIT.md`](skills/notebooklm/SECURITY_AUDIT.md):
+This Codex fork is based on the audited `v0.3.4-hermes.4` Hermes snapshot, then adds Codex packaging and workflow improvements. Install this fork for Codex support:
 
 ```bash
-# Basic installation (from this fork's audited Hermes tag)
-pip install "git+https://github.com/win4r/notebooklm-py@v0.3.4-hermes.4"
+# Basic installation from the Codex fork
+pip install "git+https://github.com/xxx-holic/notebooklm-py@main"
 
-# With browser login support (required for first-time setup)
-pip install "notebooklm-py[browser] @ git+https://github.com/win4r/notebooklm-py@v0.3.4-hermes.4"
+# With browser-cookie login and auto-refresh support (recommended for agents)
+pip install "notebooklm-py[browser,cookies] @ git+https://github.com/xxx-holic/notebooklm-py@main"
 playwright install chromium
 ```
+
+For the reproducible audited base without Codex-local changes, install `git+https://github.com/win4r/notebooklm-py@v0.3.4-hermes.4`; see [`SECURITY_AUDIT.md`](skills/notebooklm/SECURITY_AUDIT.md).
 
 If `playwright install chromium` fails with `TypeError: onExit is not a function`, see the Linux workaround in [Troubleshooting](docs/troubleshooting.md#linux).
 
@@ -116,10 +120,10 @@ If `playwright install chromium` fails with `TypeError: onExit is not a function
 For contributors or testing unreleased features:
 
 ```bash
-pip install "git+https://github.com/win4r/notebooklm-py@main"
+pip install "git+https://github.com/xxx-holic/notebooklm-py@main"
 ```
 
-⚠️ The fork's `main` tracks upstream `main` plus this fork's Hermes-specific additions. It may contain unstable changes; use the tagged command above for production.
+The Codex fork main branch tracks the audited Hermes base plus Codex-specific additions. Pin a reviewed commit or tag for production.
 
 ## Quick Start
 
@@ -217,23 +221,46 @@ asyncio.run(main())
 
 ### Agent Setup
 
-**Option 1 — CLI install** (Claude Code, `.agents/`, OpenClaw):
+**Option 1 - CLI install** (Claude Code, Codex, `.agents/`, OpenClaw):
 
 ```bash
 notebooklm skill install
+# or install Codex only:
+notebooklm skill install --target codex
 ```
 
-Installs the skill into `~/.claude/skills/notebooklm` and `~/.agents/skills/notebooklm`.
+Installs the skill into `~/.claude/skills/notebooklm`, `~/.codex/skills/notebooklm`, and `~/.agents/skills/notebooklm`. Use `--scope project` to write the same layout under the current repository.
 
-**Option 2 — `npx` install** (open skills ecosystem):
+**Option 2 - `npx` install** (open skills ecosystem):
 
 ```bash
-npx skills add win4r/notebooklm-py
+npx skills add xxx-holic/notebooklm-py
 ```
 
-Fetches [SKILL.md](SKILL.md) directly from this fork. For the upstream canonical copy, substitute `teng-lin/notebooklm-py`.
+Fetches [SKILL.md](SKILL.md) directly from this Codex fork. For the Hermes base fork, substitute `win4r/notebooklm-py`; for the upstream canonical copy, substitute `teng-lin/notebooklm-py`.
 
-**Option 3 — Hermes Agent** (uses the [`skills/notebooklm/`](skills/notebooklm/) subdirectory layout)
+**Option 3 - Codex Agent** (uses the native Codex skill directory plus packaged operator guidance)
+
+```bash
+# 1. Install this fork with browser-cookie support
+python -m pip install "notebooklm-py[browser,cookies] @ git+https://github.com/xxx-holic/notebooklm-py@main"
+python -m playwright install chromium
+
+# 2. Install the Codex skill
+notebooklm skill install --target codex
+
+# 3. Authenticate through an existing browser session and verify JSON output
+notebooklm login --browser-cookies chrome
+notebooklm auth check --test
+notebooklm list --json
+
+# 4. Show Codex-specific operating rules whenever needed
+notebooklm agent show codex
+```
+
+For parallel Codex tasks, prefer explicit notebook UUIDs and set a unique `NOTEBOOKLM_HOME` such as `<workspace>/.codex/notebooklm/<run-id>`. `.codex/notebooklm/` is ignored by this repository to prevent cookie/state commits; `.codex/skills/notebooklm/SKILL.md` remains safe to version if you intentionally install project-scope skills.
+
+**Option 4 - Hermes Agent** (uses the [`skills/notebooklm/`](skills/notebooklm/) subdirectory layout)
 
 **Prerequisites**: Hermes Agent v0.10+ installed at the default path (`~/.hermes/hermes-agent/venv` exists), `uv` on your PATH (`brew install uv` / `pip install uv` if missing), and `~/.local/bin` on your `PATH` (already true if `which hermes` returns `~/.local/bin/hermes`).
 

@@ -37,6 +37,7 @@ class TestSkillInstall:
         assert result.exit_code == 0
         assert "installed" in result.output.lower()
         assert (home / ".claude" / "skills" / "notebooklm" / "SKILL.md").exists()
+        assert (home / ".codex" / "skills" / "notebooklm" / "SKILL.md").exists()
         assert (home / ".agents" / "skills" / "notebooklm" / "SKILL.md").exists()
 
     def test_skill_install_project_agents_target_only(self, runner, tmp_path):
@@ -60,6 +61,24 @@ class TestSkillInstall:
         assert (project / ".agents" / "skills" / "notebooklm" / "SKILL.md").exists()
         assert not (project / ".claude" / "skills" / "notebooklm" / "SKILL.md").exists()
 
+    def test_skill_install_user_codex_target_only(self, runner, tmp_path):
+        """Test user-scope installs into the Codex skill path only."""
+        home = tmp_path / "home"
+        mock_source_content = "---\nname: notebooklm\n---\n# Test"
+
+        with (
+            patch.object(
+                skill_module, "get_skill_source_content", return_value=mock_source_content
+            ),
+            patch.object(skill_module.Path, "home", return_value=home),
+        ):
+            result = runner.invoke(cli, ["skill", "install", "--target", "codex"])
+
+        assert result.exit_code == 0
+        assert (home / ".codex" / "skills" / "notebooklm" / "SKILL.md").exists()
+        assert not (home / ".claude" / "skills" / "notebooklm" / "SKILL.md").exists()
+        assert not (home / ".agents" / "skills" / "notebooklm" / "SKILL.md").exists()
+
     def test_skill_install_project_scope_all_targets(self, runner, tmp_path):
         """Test project-scope installs both targets under cwd when target=all."""
         project = tmp_path / "project"
@@ -75,6 +94,7 @@ class TestSkillInstall:
 
         assert result.exit_code == 0
         assert (project / ".claude" / "skills" / "notebooklm" / "SKILL.md").exists()
+        assert (project / ".codex" / "skills" / "notebooklm" / "SKILL.md").exists()
         assert (project / ".agents" / "skills" / "notebooklm" / "SKILL.md").exists()
 
     def test_skill_install_source_not_found(self, runner, tmp_path):
@@ -122,6 +142,7 @@ class TestSkillStatus:
         assert result.exit_code == 0
         assert "not installed" in result.output.lower()
         assert "claude code" in result.output.lower()
+        assert "codex" in result.output.lower()
         assert "agent skills" in result.output.lower()
 
     def test_skill_status_installed_version_mismatch(self, runner, tmp_path):
@@ -145,7 +166,11 @@ class TestSkillStatus:
         """Test status when both targets are installed with the current version."""
         home = tmp_path / "home"
         version = "1.2.3"
-        for subdir in [".claude/skills/notebooklm", ".agents/skills/notebooklm"]:
+        for subdir in [
+            ".claude/skills/notebooklm",
+            ".codex/skills/notebooklm",
+            ".agents/skills/notebooklm",
+        ]:
             dest = home / subdir / "SKILL.md"
             dest.parent.mkdir(parents=True)
             dest.write_text(f"<!-- notebooklm-py v{version} -->\n# Test")
@@ -158,7 +183,7 @@ class TestSkillStatus:
 
         assert result.exit_code == 0
         assert "version mismatch" not in result.output.lower()
-        assert result.output.count("Installed") >= 2
+        assert result.output.count("Installed") >= 3
 
 
 class TestSkillUninstall:
@@ -184,7 +209,11 @@ class TestSkillUninstall:
     def test_skill_uninstall_all_targets_removes_both(self, runner, tmp_path):
         """Test that uninstall --target all removes both targets and cleans empty dirs."""
         home = tmp_path / "home"
-        for subdir in [".claude/skills/notebooklm", ".agents/skills/notebooklm"]:
+        for subdir in [
+            ".claude/skills/notebooklm",
+            ".codex/skills/notebooklm",
+            ".agents/skills/notebooklm",
+        ]:
             dest = home / subdir / "SKILL.md"
             dest.parent.mkdir(parents=True)
             dest.write_text("# Test")
@@ -194,9 +223,11 @@ class TestSkillUninstall:
 
         assert result.exit_code == 0
         assert not (home / ".claude" / "skills" / "notebooklm" / "SKILL.md").exists()
+        assert not (home / ".codex" / "skills" / "notebooklm" / "SKILL.md").exists()
         assert not (home / ".agents" / "skills" / "notebooklm" / "SKILL.md").exists()
         # Empty intermediate directories should be cleaned up
         assert not (home / ".claude" / "skills" / "notebooklm").exists()
+        assert not (home / ".codex" / "skills" / "notebooklm").exists()
         assert not (home / ".agents" / "skills" / "notebooklm").exists()
 
     def test_skill_uninstall_not_installed(self, runner, tmp_path):
@@ -224,6 +255,15 @@ class TestSkillShow:
 
         assert result.exit_code == 0
         assert "NotebookLM Skill" in result.output
+
+    def test_skill_show_does_not_interpret_rich_markup(self, runner):
+        """Test that Markdown brackets such as extras are printed literally."""
+        content = 'pip install "notebooklm-py[browser,cookies] @ git+https://example"'
+        with patch.object(skill_module, "get_skill_source_content", return_value=content):
+            result = runner.invoke(cli, ["skill", "show"])
+
+        assert result.exit_code == 0
+        assert "notebooklm-py[browser,cookies]" in result.output
 
     def test_skill_show_source_not_found(self, runner):
         """Test that show exits with code 1 when package data is missing."""

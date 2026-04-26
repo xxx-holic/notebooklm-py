@@ -9,29 +9,31 @@ Complete programmatic access to Google NotebookLM—including capabilities not e
 
 ## Installation
 
-**From PyPI (Recommended):**
+**Codex fork (recommended for Codex agents):**
 ```bash
-pip install notebooklm-py
+pip install "notebooklm-py[browser,cookies] @ git+https://github.com/xxx-holic/notebooklm-py@main"
+python -m playwright install chromium
 ```
 
-**From GitHub (use latest release tag, NOT main branch):**
+**Audited Hermes base (without Codex-local changes):**
 ```bash
-# Get the latest release tag (using curl)
-LATEST_TAG=$(curl -s https://api.github.com/repos/teng-lin/notebooklm-py/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
-pip install "git+https://github.com/teng-lin/notebooklm-py@${LATEST_TAG}"
+pip install "notebooklm-py[browser,cookies] @ git+https://github.com/win4r/notebooklm-py@v0.3.4-hermes.4"
+python -m playwright install chromium
 ```
 
-⚠️ **DO NOT install from main branch** (`pip install git+https://github.com/teng-lin/notebooklm-py`). The main branch may contain unreleased/unstable changes. Always use PyPI or a specific release tag, unless you are testing unreleased features.
+Pin a reviewed commit or tag for production runs. Do not install from an unreviewed moving branch when the environment stores Google cookies.
 
 **Skill install methods:**
 
-- `notebooklm skill install` installs this skill into the supported local agent directories managed by the CLI.
-- `npx skills add teng-lin/notebooklm-py` installs this skill from the GitHub repository into compatible agent skill directories.
+- `notebooklm skill install` installs this skill into supported local agent directories managed by the CLI, including Codex at `~/.codex/skills/notebooklm/SKILL.md`.
+- `notebooklm skill install --target codex` installs only the Codex skill target.
+- `npx skills add xxx-holic/notebooklm-py` installs this skill from the Codex fork into compatible agent skill directories.
 - If you are already reading this file inside an agent skill directory, the skill is already installed. You only need the Python package and authentication below.
 
 **CLI-managed install:**
 ```bash
 notebooklm skill install
+notebooklm skill install --target codex  # Codex-only install
 ```
 
 ## Prerequisites
@@ -44,6 +46,16 @@ notebooklm list           # Verify authentication works
 ```
 
 If commands fail with authentication errors, re-run `notebooklm login`.
+
+If Codex runs in a non-interactive or long-running session, prefer browser-cookie import and one-shot refresh:
+
+```bash
+notebooklm login --browser-cookies chrome
+export NOTEBOOKLM_REFRESH_CMD="notebooklm login --browser-cookies chrome"
+```
+
+For Codex parallel work, set `NOTEBOOKLM_HOME=<workspace>/.codex/notebooklm/<run-id>` or `NOTEBOOKLM_PROFILE=codex-<run-id>` and prefer `--json` with explicit full notebook UUIDs over `notebooklm use`.
+
 
 ### CI/CD, Multiple Accounts, and Parallel Agents
 
@@ -64,7 +76,7 @@ For automated environments, multiple accounts, or parallel agent workflows:
 **Solutions for parallel workflows:**
 1. **Always use explicit notebook ID** (recommended): Pass `-n <notebook_id>` (for `wait`/`download` commands) or `--notebook <notebook_id>` (for others) instead of relying on `use`
 2. **Per-agent isolation via profiles:** `export NOTEBOOKLM_PROFILE=agent-$ID` (each profile gets its own context file)
-3. **Per-agent isolation via home:** Set unique `NOTEBOOKLM_HOME` per agent: `export NOTEBOOKLM_HOME=/tmp/agent-$ID`
+3. **Per-agent isolation via home:** Set unique `NOTEBOOKLM_HOME` per agent: `export NOTEBOOKLM_HOME=$PWD/.codex/notebooklm/agent-$ID`
 4. **Use full UUIDs:** Avoid partial IDs in automation (they can become ambiguous)
 
 ## Agent Setup Verification

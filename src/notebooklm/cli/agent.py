@@ -21,4 +21,4 @@ def show_agent(target: str):
         console.print(f"[red]Error:[/red] {target} instructions not found in package data.")
         raise SystemExit(1)
 
-    console.print(content)
+    console.print(content, markup=False)

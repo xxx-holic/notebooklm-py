@@ -1,6 +1,7 @@
 """Tests for authentication module."""
 
 import json
+import sys
 from pathlib import Path
 
 import pytest
@@ -597,10 +598,14 @@ class TestFetchTokensAutoRefresh:
         fresh_file.write_text(
             json.dumps({"cookies": [{"name": "SID", "value": "fresh", "domain": ".google.com"}]})
         )
-        refresh_script = tmp_path / "refresh.sh"
-        refresh_script.write_text(f"#!/usr/bin/env bash\ncp {fresh_file} {storage_file}\n")
-        refresh_script.chmod(0o755)
-        monkeypatch.setenv("NOTEBOOKLM_REFRESH_CMD", str(refresh_script))
+        refresh_script = tmp_path / "refresh.py"
+        refresh_script.write_text(
+            "import shutil\n"
+            f"shutil.copyfile({str(fresh_file)!r}, {str(storage_file)!r})\n"
+        )
+        monkeypatch.setenv(
+            "NOTEBOOKLM_REFRESH_CMD", f'"{sys.executable}" "{refresh_script}"'
+        )
 
         # First HTTP call: auth redirect
         httpx_mock.add_response(
@@ -634,10 +639,11 @@ class TestFetchTokensAutoRefresh:
         monkeypatch.setattr("notebooklm.auth.get_storage_path", lambda: storage_file)
 
         # Refresh is a no-op (still stale after)
-        refresh_script = tmp_path / "refresh.sh"
-        refresh_script.write_text("#!/usr/bin/env bash\nexit 0\n")
-        refresh_script.chmod(0o755)
-        monkeypatch.setenv("NOTEBOOKLM_REFRESH_CMD", str(refresh_script))
+        refresh_script = tmp_path / "refresh.py"
+        refresh_script.write_text("# no-op refresh\n")
+        monkeypatch.setenv(
+            "NOTEBOOKLM_REFRESH_CMD", f'"{sys.executable}" "{refresh_script}"'
+        )
 
         # Both attempts hit the same redirect
         for _ in range(2):
@@ -659,10 +665,15 @@ class TestFetchTokensAutoRefresh:
         self, tmp_path, monkeypatch, httpx_mock: HTTPXMock
     ):
         """Refresh command failure surfaces as RuntimeError, not silent auth error."""
-        refresh_script = tmp_path / "refresh.sh"
-        refresh_script.write_text("#!/usr/bin/env bash\necho 'vault unavailable' >&2\nexit 1\n")
-        refresh_script.chmod(0o755)
-        monkeypatch.setenv("NOTEBOOKLM_REFRESH_CMD", str(refresh_script))
+        refresh_script = tmp_path / "refresh.py"
+        refresh_script.write_text(
+            "import sys\n"
+            "print('vault unavailable', file=sys.stderr)\n"
+            "raise SystemExit(1)\n"
+        )
+        monkeypatch.setenv(
+            "NOTEBOOKLM_REFRESH_CMD", f'"{sys.executable}" "{refresh_script}"'
+        )
 
         httpx_mock.add_response(
             url="https://notebooklm.google.com/",

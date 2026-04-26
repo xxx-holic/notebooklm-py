@@ -20,6 +20,7 @@ class SkillTarget:
 
 TARGETS = {
     "claude": SkillTarget("Claude Code", Path(".claude") / "skills" / "notebooklm" / "SKILL.md"),
+    "codex": SkillTarget("Codex", Path(".codex") / "skills" / "notebooklm" / "SKILL.md"),
     "agents": SkillTarget("Agent Skills", Path(".agents") / "skills" / "notebooklm" / "SKILL.md"),
 }
 SCOPES = ("user", "project")
@@ -119,7 +120,7 @@ def skill():
     type=click.Choice(["all", *TARGETS]),
     default="all",
     show_default=True,
-    help="Install for Claude Code, universal agent skill directories, or both.",
+    help="Install for Claude Code, Codex, universal agent skill directories, or all.",
 )
 def install(scope: str, target_name: str):
     """Install or update the NotebookLM skill for supported agent directories."""
@@ -175,7 +176,7 @@ def install(scope: str, target_name: str):
     type=click.Choice(["all", *TARGETS]),
     default="all",
     show_default=True,
-    help="Inspect Claude Code, universal agent skill directories, or both.",
+    help="Inspect Claude Code, Codex, universal agent skill directories, or all.",
 )
 def status(scope: str, target_name: str):
     """Check installed skill targets and version info."""
@@ -221,7 +222,7 @@ def status(scope: str, target_name: str):
     type=click.Choice(["all", *TARGETS]),
     default="all",
     show_default=True,
-    help="Remove Claude Code, universal agent skill directories, or both.",
+    help="Remove Claude Code, Codex, universal agent skill directories, or all.",
 )
 def uninstall(scope: str, target_name: str):
     """Remove the NotebookLM skill from supported agent directories."""
@@ -267,7 +268,7 @@ def show(scope: str, target_name: str):
         if content is None:
             console.print("[red]Error:[/red] Skill source not found in package data.")
             raise SystemExit(1)
-        console.print(content)
+        console.print(content, markup=False)
         return
 
     content = get_installed_content(target_name, scope)
@@ -276,4 +277,4 @@ def show(scope: str, target_name: str):
         console.print("Run [cyan]notebooklm skill install[/cyan] first.")
         return
 
-    console.print(content)
+    console.print(content, markup=False)

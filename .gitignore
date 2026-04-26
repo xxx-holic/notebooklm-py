@@ -13,6 +13,7 @@ build/
 .DS_Store
 .env
 .notebooklm/
+.codex/notebooklm/
 # Defence-in-depth: catch accidental in-repo writes of the auth file
 storage_state.json
 *cookies*.json
