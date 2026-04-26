@@ -1064,8 +1064,8 @@ def register_session_commands(cli):
 
         def status_icon(val):
             if val is None:
-                return "[dim]⊘ skipped[/dim]"
-            return "[green]✓ pass[/green]" if val else "[red]✗ fail[/red]"
+                return "[dim]- skipped[/dim]"
+            return "[green]PASS[/green]" if val else "[red]FAIL[/red]"
 
         table.add_row(
             "Storage exists",
